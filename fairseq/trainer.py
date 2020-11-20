@@ -220,6 +220,10 @@ class Trainer(object):
                 for meter in self.meters.values():
                     if isinstance(meter, TimeMeter):
                         meter.reset()
+
+            if 'num_updates' in extra_state:
+                self.model.num_updates = extra_state['num_updates']
+
         else:
             print('| no existing checkpoint found {}'.format(filename))
 
@@ -426,6 +430,12 @@ class Trainer(object):
 
             if 'nll_loss' in logging_output:
                 self.meters['train_nll_loss'].update(logging_output.get('nll_loss', 0), ntokens)
+
+            if self.model.num_updates is None:
+                self.model.num_updates = 0
+
+            self.model.num_updates += 1#nsentences
+
         except OverflowError as e:
             print('| WARNING: overflow detected, ' + str(e))
             self.zero_grad()

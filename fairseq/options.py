@@ -23,6 +23,7 @@ def get_training_parser(default_task='translation'):
     add_dataset_args(parser, train=True)
     add_distributed_training_args(parser)
     add_model_args(parser)
+    add_bgt_args(parser)
     add_optimization_args(parser)
     add_checkpoint_args(parser)
     return parser
@@ -32,6 +33,7 @@ def get_generation_parser(interactive=False, default_task='translation'):
     parser = get_parser('Generation', default_task)
     add_dataset_args(parser, gen=True)
     add_generation_args(parser)
+    add_bgt_args(parser)
     if interactive:
         add_interactive_args(parser)
     return parser
@@ -45,6 +47,7 @@ def get_eval_lm_parser(default_task='language_modeling'):
     parser = get_parser('Evaluate Language Model', default_task)
     add_dataset_args(parser, gen=True)
     add_eval_lm_args(parser)
+    add_bgt_args(parser)
     return parser
 
 
@@ -53,6 +56,7 @@ def get_validation_parser(default_task=None):
     add_dataset_args(parser, train=True)
     group = parser.add_argument_group('Evaluation')
     add_common_eval_args(group)
+    add_bgt_args(parser)
     return parser
 
 
@@ -522,6 +526,24 @@ def add_interactive_args(parser):
                        help='file to read from; use - for stdin')
     # fmt: on
 
+def add_bgt_args(parser):
+    group = parser.add_argument_group('Model configuration')
+    # fmt: off
+
+    group.add_argument('--sentencepiece',
+                         help='path to sentencepiece file')
+    group.add_argument('--sim-file',
+                         help='path to tab-separated list of sentence pairs to score.')
+    group.add_argument('--style-transfer-file',
+                         help='path to tab-separated list of sentence pairs to score.')
+    group.add_argument('--eval-encoder',
+                         help='which encoder to use for evaluations', default="encoder_sem")
+    group.add_argument('--tokenize',
+                         help='whether to tokenize for automatic evaluation', default=0, type=int)
+    group.add_argument('--load-pretrained-encoder', default=None,
+                       help='initialize encoder of BGT')
+    # fmt: on
+    return group
 
 def add_model_args(parser):
     group = parser.add_argument_group('Model configuration')

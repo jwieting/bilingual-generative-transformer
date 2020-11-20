@@ -43,6 +43,8 @@ from .transform_eos_dataset import TransformEosDataset
 from .transform_eos_lang_pair_dataset import TransformEosLangPairDataset
 from .truncate_dataset import TruncateDataset
 from .resampling_dataset import ResamplingDataset
+from .language_pair_dataset_bgt import LanguagePairDatasetBGT
+from .style_transfer_dataset import StyleTransferDataset
 
 from .iterators import (
     CountingIterator,
@@ -67,6 +69,7 @@ __all__ = [
     'IndexedDataset',
     'IndexedRawTextDataset',
     'LanguagePairDataset',
+    'LanguagePairDatasetBGT',
     'LeftPadDataset',
     'ListDataset',
     'LMContextWindowDataset',
@@ -92,6 +95,7 @@ __all__ = [
     'ShardedIterator',
     'SortDataset',
     'StripTokenDataset',
+    'StyleTransferDataset',
     'SubsampleDataset',
     'TokenBlockDataset',
     'TransformEosDataset',

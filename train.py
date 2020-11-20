@@ -19,6 +19,9 @@ from fairseq.data import iterators
 from fairseq.trainer import Trainer
 from fairseq.meters import AverageMeter, StopwatchMeter
 
+from embed import Embedder
+from evaluate import evaluate
+
 
 def main(args, init_distributed=False):
     utils.import_user_module(args)
@@ -69,6 +72,7 @@ def main(args, init_distributed=False):
     # corresponding train iterator
     extra_state, epoch_itr = checkpoint_utils.load_checkpoint(args, trainer)
 
+    model.epoch_iter = epoch_itr
     # Train until the learning rate gets too small
     max_epoch = args.max_epoch or math.inf
     max_update = args.max_update or math.inf
@@ -76,6 +80,20 @@ def main(args, init_distributed=False):
     train_meter = StopwatchMeter()
     train_meter.start()
     valid_subsets = args.valid_subset.split(',')
+
+    if args.load_pretrained_encoder:
+        from collections import OrderedDict
+        new_state_dict = OrderedDict()
+        if not args.cpu:
+            _model = torch.load(args.load_pretrained_encoder)
+        else:
+            _model = torch.load(args.load_pretrained_encoder, map_location='cpu')
+        state_dict = _model['model']
+        for i in state_dict:
+            if "encoder_" in i:
+                new_state_dict[i] = state_dict[i]
+        model.load_state_dict(new_state_dict, strict=True)
+
     while lr > args.min_lr and epoch_itr.epoch < max_epoch and trainer.get_num_updates() < max_update:
         # train for one epoch
         train(args, trainer, task, epoch_itr)
@@ -87,6 +105,9 @@ def main(args, init_distributed=False):
 
         # only use first validation loss to update the learning rate
         lr = trainer.lr_step(epoch_itr.epoch, valid_losses[0])
+
+        embedder = Embedder(args, model, task)
+        evaluate(embedder, args)
 
         # save checkpoint
         if epoch_itr.epoch % args.save_interval == 0:

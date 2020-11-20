@@ -1,138 +1,69 @@
-# <img src="fairseq_logo.png" width="30"> Introduction
+# bilingual-generative-transformer
 
-Fairseq(-py) is a sequence modeling toolkit that allows researchers and
-developers to train custom models for translation, summarization, language
-modeling and other text generation tasks.
+Code to train models from "A Bilingual Generative Transformer for Semantic Sentence Embedding". Our code is based on the 58e43cb3ff18f1f47fd62926f00c70cb5920a66f commit from Fairseq https://github.com/pytorch/fairseq from Facebook AI Research.
 
-### What's New:
+To get started, follow the installation and setup instructions below.
 
-- September 2019: [Nonautoregressive translation code released](examples/nonautoregressive_translation/README.md)
-- August 2019: [WMT'19 models released](examples/wmt19/README.md)
-- July 2019: fairseq relicensed under MIT license
-- July 2019: [RoBERTa models and code released](examples/roberta/README.md)
-- June 2019: [wav2vec models and code released](examples/wav2vec/README.md)
+If you use our code for your work please cite:
 
-### Features:
+    @article{wieting2019bilingual,
+        title={A Bilingual Generative Transformer for Semantic Sentence Embedding},
+        author={Wieting, John and Neubig, Graham and Berg-Kirkpatrick, Taylor},
+        booktitle={Proceedings of the Empirical Methods in Natural Language Processing},
+        url={https://arxiv.org/abs/1911.03895},
+        year={2019}
+    }
 
-Fairseq provides reference implementations of various sequence-to-sequence models, including:
-- **Convolutional Neural Networks (CNN)**
-  - [Language Modeling with Gated Convolutional Networks (Dauphin et al., 2017)](examples/language_model/conv_lm/README.md)
-  - [Convolutional Sequence to Sequence Learning (Gehring et al., 2017)](examples/conv_seq2seq/README.md)
-  - [Classical Structured Prediction Losses for Sequence to Sequence Learning (Edunov et al., 2018)](https://github.com/pytorch/fairseq/tree/classic_seqlevel)
-  - [Hierarchical Neural Story Generation (Fan et al., 2018)](examples/stories/README.md)
-  - [wav2vec: Unsupervised Pre-training for Speech Recognition (Schneider et al., 2019)](examples/wav2vec/README.md)
-- **LightConv and DynamicConv models**
-  - [Pay Less Attention with Lightweight and Dynamic Convolutions (Wu et al., 2019)](examples/pay_less_attention_paper/README.md)
-- **Long Short-Term Memory (LSTM) networks**
-  - Effective Approaches to Attention-based Neural Machine Translation (Luong et al., 2015)
-- **Transformer (self-attention) networks**
-  - Attention Is All You Need (Vaswani et al., 2017)
-  - [Scaling Neural Machine Translation (Ott et al., 2018)](examples/scaling_nmt/README.md)
-  - [Understanding Back-Translation at Scale (Edunov et al., 2018)](examples/backtranslation/README.md)
-  - [Adaptive Input Representations for Neural Language Modeling (Baevski and Auli, 2018)](examples/language_model/transformer_lm/README.md)
-  - [Mixture Models for Diverse Machine Translation: Tricks of the Trade (Shen et al., 2019)](examples/translation_moe/README.md)
-  - [RoBERTa: A Robustly Optimized BERT Pretraining Approach (Liu et al., 2019)](examples/roberta/README.md)
-  - [Facebook FAIR's WMT19 News Translation Task Submission (Ng et al., 2019)](examples/wmt19/README.md)
-  - [Jointly Learning to Align and Translate with Transformer Models (Garg et al., 2019)](examples/joint_alignment_translation/README.md )
-- **Non-autoregressive Transformers**
-  - Non-Autoregressive Neural Machine Translation (Gu et al., 2017)
-  - Deterministic Non-Autoregressive Neural Sequence Modeling by Iterative Refinement (Lee et al. 2018)
-  - Insertion Transformer: Flexible Sequence Generation via Insertion Operations (Stern et al. 2019)
-  - Mask-Predict: Parallel Decoding of Conditional Masked Language Models (Ghazvininejad et al., 2019)
-  - [Levenshtein Transformer (Gu et al., 2019)](examples/nonautoregressive_translation/README.md)
+Installation and setup instructions:
 
+1. Clone the repository and install the code:
 
-**Additionally:**
-- multi-GPU (distributed) training on one machine or across multiple machines
-- fast generation on both CPU and GPU with multiple search algorithms implemented:
-  - beam search
-  - Diverse Beam Search ([Vijayakumar et al., 2016](https://arxiv.org/abs/1610.02424))
-  - sampling (unconstrained, top-k and top-p/nucleus)
-- large mini-batch training even on a single GPU via delayed updates
-- mixed precision training (trains faster with less GPU memory on [NVIDIA tensor cores](https://developer.nvidia.com/tensor-cores))
-- extensible: easily register new models, criterions, tasks, optimizers and learning rate schedulers
+        git clone https://github.com/jwieting/bilingual-generative-transformer.git
+        cd bilingual-generative-transformer
+        pip install --editable .
 
-We also provide [pre-trained models](#pre-trained-models-and-examples) for several benchmark
-translation and language modeling datasets.
+2. Download the data files, including training data, and saved models from http://www.cs.cmu.edu/~jwieting:
 
-![Model](fairseq.gif)
+        wget http://www.cs.cmu.edu/~jwieting/bgt.zip .
+        unzip bgt.zip
+        rm bgt.zip
+        
+3. Download the STS evaluation data:
 
-# Requirements and Installation
+        wget http://www.cs.cmu.edu/~jwieting/STS.zip .
+        unzip STS.zip
+        rm STS.zip
 
-* [PyTorch](http://pytorch.org/) version >= 1.2.0
-* Python version >= 3.5
-* For training new models, you'll also need an NVIDIA GPU and [NCCL](https://github.com/NVIDIA/nccl)
-* **For faster training** install NVIDIA's [apex](https://github.com/NVIDIA/apex) library with the `--cuda_ext` option
+To train the (Bilingual Generative Transformer) BGT model (on French OpenSubtitles 2018 and Gigaword data) other choices include (OpenSubtitles 2018 ar, es, fr, ja, and tr):
 
-To install fairseq:
-```bash
-pip install fairseq
-```
+    python -u train.py bgt/fr-os-giga/data-joint-bin -a bgt-emnlp --bgt-setting bgt --optimizer adam --lr 0.0005 -s en -t fr \
+    --label-smoothing 0.1 --dropout 0.3 --max-tokens 500 --min-lr '1e-09' --lr-scheduler inverse_sqrt --weight-decay 0.0001 \
+    --criterion bgt_loss --max-epoch 20 --warmup-updates 4000 --warmup-init-lr '1e-07' --adam-betas '(0.9, 0.98)' \
+    --save-dir checkpoints/bgt --distributed-world-size 1 --latent-size 1024 --update-freq 50 --task bgt \
+    --save-interval-updates 0 --sentencepiece bgt/fr-os-giga/fr-en.1m.sp.20k.model --x0 65536 --translation-loss 1.0 \
+    --sentence-avg --tokenize 1 --num-workers 0 --find-unused-parameters
 
-On MacOS:
-```bash
-CFLAGS="-stdlib=libc++" pip install fairseq
-```
+To train the translation (Trans) baseline model (on French OpenSubtitles 2018 and Gigaword data) other choices include (OpenSubtitles 2018 ar, es, fr, ja, and tr):
 
-If you use Docker make sure to increase the shared memory size either with
-`--ipc=host` or `--shm-size` as command line options to `nvidia-docker run`.
+    python -u train.py bgt/fr-os-giga/data-joint-bin -a bgt-emnlp --bgt-setting trans --optimizer adam --lr 0.0005 -s en -t fr \
+    --label-smoothing 0.1 --dropout 0.3 --max-tokens 500 --min-lr '1e-09' --lr-scheduler inverse_sqrt --weight-decay 0.0001 \
+    --criterion bilingual_label_smoothed_cross_entropy --max-epoch 20 --warmup-updates 4000 --warmup-init-lr '1e-07' \
+    --adam-betas '(0.9, 0.98)' --save-dir checkpoints/trans --distributed-world-size 1 --latent-size 1024 --update-freq 50 \
+    --task bgt --save-interval-updates 0 --sentencepiece bgt/fr-os-giga/fr-en.1m.sp.20k.model --sentence-avg --tokenize 1\
+    --num-workers 0 --find-unused-parameters
 
-**Installing from source**
+To evaluate a model on the STS tasks:
 
-To install fairseq from source and develop locally:
-```bash
-git clone https://github.com/pytorch/fairseq
-cd fairseq
-pip install --editable .
-```
+    python -u evaluate.py bgt/fr-os-giga/data-joint-bin -s en -t fr --path bgt/checkpoints/bgt/checkpoint_best.pt \
+    --tokenize 1 --sentencepiece bgt/fr-os-giga/fr-en.1m.sp.20k.model
 
-# Getting Started
+To score a list of sentence pairs in tab-separated (tsv) format:
 
-The [full documentation](https://fairseq.readthedocs.io/) contains instructions
-for getting started, training new models and extending fairseq with new model
-types and tasks.
+    python -u evaluate_list.py bgt/fr-os-giga/data-joint-bin -s en -t fr --path bgt/checkpoints/bgt/checkpoint_best.pt \
+    --sentencepiece bgt/fr-os-giga/fr-en.1m.sp.20k.model --tokenize 1 --sim-file bgt/sentences.txt
 
-# Pre-trained models and examples
+To generate outputs following our "style-transfer" setting:
 
-We provide pre-trained models and pre-processed, binarized test sets for several tasks listed below,
-as well as example training and evaluation commands.
-
-- [Translation](examples/translation/README.md): convolutional and transformer models are available
-- [Language Modeling](examples/language_model/README.md): convolutional and transformer models are available
-
-We also have more detailed READMEs to reproduce results from specific papers:
-- [Jointly Learning to Align and Translate with Transformer Models (Garg et al., 2019)](examples/joint_alignment_translation/README.md )
-- [Levenshtein Transformer (Gu et al., 2019)](examples/nonautoregressive_translation/README.md)
-- [Facebook FAIR's WMT19 News Translation Task Submission (Ng et al., 2019)](examples/wmt19/README.md)
-- [RoBERTa: A Robustly Optimized BERT Pretraining Approach (Liu et al., 2019)](examples/roberta/README.md)
-- [wav2vec: Unsupervised Pre-training for Speech Recognition (Schneider et al., 2019)](examples/wav2vec/README.md)
-- [Mixture Models for Diverse Machine Translation: Tricks of the Trade (Shen et al., 2019)](examples/translation_moe/README.md)
-- [Pay Less Attention with Lightweight and Dynamic Convolutions (Wu et al., 2019)](examples/pay_less_attention_paper/README.md)
-- [Understanding Back-Translation at Scale (Edunov et al., 2018)](examples/backtranslation/README.md)
-- [Classical Structured Prediction Losses for Sequence to Sequence Learning (Edunov et al., 2018)](https://github.com/pytorch/fairseq/tree/classic_seqlevel)
-- [Hierarchical Neural Story Generation (Fan et al., 2018)](examples/stories/README.md)
-- [Scaling Neural Machine Translation (Ott et al., 2018)](examples/scaling_nmt/README.md)
-- [Convolutional Sequence to Sequence Learning (Gehring et al., 2017)](examples/conv_seq2seq/README.md)
-- [Language Modeling with Gated Convolutional Networks (Dauphin et al., 2017)](examples/language_model/conv_lm/README.md)
-
-# Join the fairseq community
-
-* Facebook page: https://www.facebook.com/groups/fairseq.users
-* Google group: https://groups.google.com/forum/#!forum/fairseq-users
-
-# License
-fairseq(-py) is MIT-licensed.
-The license applies to the pre-trained models as well.
-
-# Citation
-
-Please cite as:
-
-```bibtex
-@inproceedings{ott2019fairseq,
-  title = {fairseq: A Fast, Extensible Toolkit for Sequence Modeling},
-  author = {Myle Ott and Sergey Edunov and Alexei Baevski and Angela Fan and Sam Gross and Nathan Ng and David Grangier and Michael Auli},
-  booktitle = {Proceedings of NAACL-HLT 2019: Demonstrations},
-  year = {2019},
-}
-```
+    python -u style_transfer.py bgt/fr-os-giga/data-joint-bin -s en -t fr --path bgt/checkpoints/bgt/checkpoint_best.pt \
+    --sentencepiece bgt/fr-os-giga/fr-en.1m.sp.20k.model --tokenize 1 --task bgt --remove-bpe sentencepiece \
+    --style-transfer-file bgt/style_transfer.txt

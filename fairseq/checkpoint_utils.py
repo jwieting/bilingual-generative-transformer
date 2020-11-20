@@ -61,6 +61,9 @@ def save_checkpoint(args, trainer, epoch_itr, val_loss):
     if hasattr(save_checkpoint, 'best'):
         extra_state.update({'best': save_checkpoint.best})
 
+    if trainer.model.num_updates is not None:
+        extra_state['num_updates'] = trainer.model.num_updates
+
     checkpoints = [os.path.join(args.save_dir, fn) for fn, cond in checkpoint_conds.items() if cond]
     if len(checkpoints) > 0:
         trainer.save_checkpoint(checkpoints[0], extra_state)
